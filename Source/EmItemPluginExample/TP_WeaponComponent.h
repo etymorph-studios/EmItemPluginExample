@@ -15,7 +15,7 @@ class EMITEMPLUGINEXAMPLE_API UTP_WeaponComponent : public USkeletalMeshComponen
 
 public:
 	/** Projectile class to spawn */
-	UPROPERTY(EditDefaultsOnly, Category=Projectile)
+	UPROPERTY(EditDefaultsOnly, Category=Projectile, BlueprintReadOnly)
 	TSubclassOf<class AEmItemPluginExampleProjectile> ProjectileClass;
 
 	/** Sound to play each time we fire */
@@ -48,6 +48,8 @@ public:
 	/** Make the weapon Fire a Projectile */
 	UFUNCTION(BlueprintCallable, Category="Weapon")
 	void Fire();
+
+
 
 protected:
 	/** Ends gameplay for this component. */
