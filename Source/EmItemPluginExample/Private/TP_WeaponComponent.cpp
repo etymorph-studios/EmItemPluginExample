@@ -11,6 +11,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "Animation/AnimInstance.h"
 #include "Engine/LocalPlayer.h"
+#include "Net/UnrealNetwork.h"
 #include "Engine/World.h"
 
 // Sets default values for this component's properties
@@ -20,6 +21,24 @@ UTP_WeaponComponent::UTP_WeaponComponent()
 	MuzzleOffset = FVector(100.0f, 0.0f, 10.0f);
 }
 
+void UTP_WeaponComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(UTP_WeaponComponent, Safe_MeshAsset);
+}
+
+
+void UTP_WeaponComponent::RegisterForAttachmentEvents(FOnEmAttachParentChanged&& ListenEvent)
+{
+	OnEmAttachParentChanged = MoveTemp(ListenEvent);
+}
+
+void UTP_WeaponComponent::OnAttachmentChanged()
+{
+	Super::OnAttachmentChanged();
+	OnEmAttachParentChanged.ExecuteIfBound(GetAttachParentActor(), LastAttachActor);
+	LastAttachActor = GetAttachParentActor();
+}
 
 void UTP_WeaponComponent::Fire()
 {
@@ -117,3 +136,20 @@ void UTP_WeaponComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 		}
 	}
 }
+
+
+
+void UTP_WeaponComponent::OnRep_SkeletalMeshAsset()
+{
+	SetSkeletalMesh(Safe_MeshAsset);
+}
+
+void UTP_WeaponComponent::AuthSetSkeletalMesh(USkeletalMesh* MeshAsset)
+{
+	if (GetOwner()->HasAuthority() && MeshAsset != Safe_MeshAsset)
+	{
+		Safe_MeshAsset = MeshAsset;
+		OnRep_SkeletalMeshAsset();
+	}
+}
+

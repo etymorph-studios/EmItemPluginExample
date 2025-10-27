@@ -4,14 +4,32 @@
 
 #include "CoreMinimal.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Item/Game/EmItemAttachmentInterface.h"
 #include "TP_WeaponComponent.generated.h"
 
 class AEmItemPluginExampleCharacter;
 
 UCLASS(Blueprintable, BlueprintType, ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class EMITEMPLUGINEXAMPLE_API UTP_WeaponComponent : public USkeletalMeshComponent
+class EMITEMPLUGINEXAMPLE_API UTP_WeaponComponent : public USkeletalMeshComponent, public IEmItemAttachmentInterface
 {
 	GENERATED_BODY()
+
+
+
+protected:
+	FOnEmAttachParentChanged OnEmAttachParentChanged;
+	UPROPERTY(Transient) AActor* LastAttachActor { nullptr };
+	virtual void OnAttachmentChanged() override;
+
+
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
+
+public:
+
+	/// override UEmItemAttachmentInterface. Allows this to be the root component of the AEmItem.
+	virtual void RegisterForAttachmentEvents(FOnEmAttachParentChanged&& ListenEvent) override;
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly) void AuthSetSkeletalMesh(USkeletalMesh* MeshAsset);
 
 public:
 	/** Projectile class to spawn */
@@ -51,10 +69,17 @@ public:
 
 
 
+	
+
+
 protected:
 	/** Ends gameplay for this component. */
 	UFUNCTION()
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+
+	UFUNCTION() void OnRep_SkeletalMeshAsset();
+	UPROPERTY(ReplicatedUsing = OnRep_SkeletalMeshAsset, EditAnywhere, BlueprintReadWrite, Category = Mesh) USkeletalMesh* Safe_MeshAsset {nullptr};
 
 private:
 	/** The Character holding this weapon*/
